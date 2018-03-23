@@ -1,0 +1,344 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title>我的收件人</title>
+    <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css" />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="page">
+            <div id="loadingToast" style="display:none;">
+                <div class="weui-mask_transparent"></div>
+                <div class="weui-toast">
+                    <i class="weui-loading weui-icon_toast"></i>
+                    <p class="weui-toast__content">加载中</p>
+                </div>
+            </div>
+
+            <div class="js_dialog" id="refreshDialog" style="display: none;">
+                <div class="weui-mask"></div>
+                <div class="weui-dialog">
+                    <div class="weui-dialog__bd">加载失败，请刷新重试</div>
+                    <div class="weui-dialog__ft">
+                        <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">确定</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="js_dialog" id="saveDialog" style="display: none;">
+                <div class="weui-mask"></div>
+                <div class="weui-dialog">
+                    <div class="weui-dialog__bd">保存失败，请刷新重试</div>
+                    <div class="weui-dialog__ft">
+                        <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">确定</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="doneToast" style="display: none;">
+                <div class="weui-mask_transparent"></div>
+                <div class="weui-toast">
+                    <i class="weui-icon-success-no-circle weui-icon_toast"></i>
+                    <p class="weui-toast__content">保存成功</p>
+                </div>
+            </div>
+
+            <div class="page__bd_sp" id="bindingForm" hidden>
+                <div class="weui-cells__title">您还未绑定alias。</div>
+
+                <div class="page__bd page__bd_spacing" style="padding:10px">
+                    <a class="weui-btn weui-btn_primary" href="javascript:;" id="bindBtn">去绑定</a>
+                </div>
+            </div>
+
+            <div class="page__bd_sp" id="infoForm" hidden>
+                <div class="weui-cells weui-cells_form" id="contactForm1" hidden>
+                    <!--<div class="weui-cell" name="nameDiv">
+                        <div class="weui-cell__hd"><label class="weui-label">收件人</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" name="nameTxt" placeholder="请输入收件人">
+                        </div>
+                        <div class="weui-cell__ft">
+                            <i class="weui-icon-warn"></i>
+                        </div>
+                    </div>-->
+                    <div class="weui-cell" name="callDiv">
+                        <div class="weui-cell__hd"><label for="" class="weui-label">电话</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" name="callTxt" placeholder="请输入电话号码">
+                        </div>
+                        <div class="weui-cell__ft">
+                            <i class="weui-icon-warn"></i>
+                        </div>
+                    </div>
+                    <div class="weui-panel__ft">
+                        <a href="javascript:;" class="weui-cell weui-cell_access weui-cell_link" id="test">
+                            <div class="weui-cell__bd">删除</div>
+                            <span class="weui-cell__ft"></span>
+                        </a>
+                    </div>
+                </div>
+                <div class="weui-cells weui-cells_form" id="contactForm2" hidden>
+                    <!--<div class="weui-cell" name="nameDiv">
+                        <div class="weui-cell__hd"><label class="weui-label">收件人</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" name="nameTxt" placeholder="请输入收件人">
+                        </div>
+                        <div class="weui-cell__ft">
+                            <i class="weui-icon-warn"></i>
+                        </div>
+                    </div>-->
+                    <div class="weui-cell" name="callDiv">
+                        <div class="weui-cell__hd"><label for="" class="weui-label">电话</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" name="callTxt" placeholder="请输入电话号码">
+                        </div>
+                        <div class="weui-cell__ft">
+                            <i class="weui-icon-warn"></i>
+                        </div>
+                    </div>
+                    <div class="weui-panel__ft">
+                        <a href="javascript:;" class="weui-cell weui-cell_access weui-cell_link">
+                            <div class="weui-cell__bd">删除</div>
+                            <span class="weui-cell__ft"></span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="weui-cells weui-cells_form" id="contactForm3" hidden>
+                    <!--<div class="weui-cell" name="nameDiv">
+                        <div class="weui-cell__hd"><label class="weui-label">收件人</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" name="nameTxt" placeholder="请输入收件人">
+                        </div>
+                        <div class="weui-cell__ft">
+                            <i class="weui-icon-warn"></i>
+                        </div>
+                    </div>-->
+                    <div class="weui-cell" name="callDiv">
+                        <div class="weui-cell__hd"><label for="" class="weui-label">电话</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" name="callTxt" placeholder="请输入电话号码">
+                        </div>
+                        <div class="weui-cell__ft">
+                            <i class="weui-icon-warn"></i>
+                        </div>
+                    </div>
+                    <div class="weui-panel__ft">
+                        <a href="javascript:;" class="weui-cell weui-cell_access weui-cell_link">
+                            <div class="weui-cell__bd">删除</div>
+                            <span class="weui-cell__ft"></span>
+                        </a>
+                    </div>
+                </div>
+                <div class="weui-panel__ft" id="addForm">
+                    <a href="javascript:;" class="weui-cell weui-cell_access weui-cell_link">
+                        <div class="weui-cell__bd">添加</div>
+                        <span class="weui-cell__ft"></span>
+                    </a>
+                </div>
+                <div class="page__bd page__bd_spacing" style="padding:10px">
+                    <a class="weui-btn weui-btn_primary" href="javascript:;" id="save">保存</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript" class="onload js_show">
+        var openid;
+        $(function () {
+            var $loadingToast = $('#loadingToast');
+            $loadingToast.fadeIn(100);
+            $.get("/api/contacts/wx?code=" + getUrlVars()['code'])
+                .done(function (data) {
+
+                    $('#infoForm').show();
+                    if (typeof (data) === 'string')
+                    {
+                        openid = data;
+                        return;
+                    }
+                    openid = data[0]["OpenId"];
+                    if (data[0]) {
+                        $('#contactForm1').show();
+                        //$('#contactForm1').find('input[name*="name"]').val(result['data'][0]['Name']);
+                        $('#contactForm1').find('input[name*="call"]').val(data[0]['Call']);
+                    }
+                    if (data[1]) {
+                        $('#contactForm2').show();
+                        //$('#contactForm2').find('input[name*="name"]').val(result['data'][1]['Name']);
+                        $('#contactForm2').find('input[name*="call"]').val(data[1]['Call']);
+                    }
+                    if (data[2]) {
+                        $('#contactForm3').show();
+                        //$('#contactForm3').find('input[name*="name"]').val(result['data'][2]['Name']);
+                        $('#contactForm3').find('input[name*="call"]').val(data[2]['Call']);
+                    }
+                })
+                .fail(function (data) {
+
+                    if (JSON.parse(data.responseText)["ErrorCode"] === "40003") {
+                        $('#bindingForm').show();
+                    }
+                    else {
+                        $('#refreshDialog').show()
+                    }
+                })
+                .always(function (data) {
+
+                    $loadingToast.fadeOut(100);
+                });
+
+            var $refreshDialog = $('#refreshDialog');
+            $('#refreshDialog a').on('click', function () {
+
+                $refreshDialog.fadeOut(200);
+            });
+
+            var $saveDialog = $('#saveDialog');
+            $('#saveDialog a').on('click', function () {
+
+                $saveDialog.fadeOut(200);
+            });
+
+            $('#bindBtn').on('click', function () {
+
+                window.location.replace("/Pages/binding.html?code=" + getUrlVars()['code'])
+            });
+
+            $("[id*=" + 'contact' + "]").each(function () {
+                var cform = this;
+                $(cform).find('[name$="Txt"]').each(function () {
+                    var txt = this;
+                    $(txt).on('input', function (e) {
+                        $(this).parent().parent().removeClass('weui-cell_warn');
+                    });
+                });
+            });
+
+            $("[id*=" + 'contact' + "]").each(function () {
+                var cform = this;
+                $(cform).find('a').each(function () {
+                    var a = this;
+                    $(a).on('click', function (e) {
+                        var j = 0;
+                        $(a).parent().parent().hide();
+                        var data = new Array();
+                        for (var i = 1; i <= 3; i++) {
+                            if (!$('#contactForm' + i).is(':hidden')) {
+                                data.push({
+                                    Name: $('#contactForm' + i).find('input[name*="name"]').val(),
+                                    Call: $('#contactForm' + i).find('input[name*="call"]').val()
+                                });
+                            }
+                            else
+                            {
+                                $('#contactForm' + i).find('input[name*="name"]').val('');
+                                $('#contactForm' + i).find('input[name*="call"]').val('');
+                            }
+                        }
+
+                        for (var i = 1; i <= 3; i++) {
+                            $('#contactForm' + i).hide();
+                            $('#contactForm' + i).find('input[name*="name"]').val('');
+                            $('#contactForm' + i).find('input[name*="call"]').val('');
+                        }
+
+                        for (var i = 1; i <= data.length; i++) {
+                            $('#contactForm' + i).show();
+                            $('#contactForm' + i).find('input[name*="name"]').val(data[i - 1]['Name']);
+                            $('#contactForm' + i).find('input[name*="call"]').val(data[i - 1]['Call']);
+                        }
+                    });
+                });
+            });
+
+            $('#addForm').find('a').on('click', function (e) {
+                for (var i = 1; i <= 3; i++) {
+                    if ($('#contactForm' + i).is(':hidden')) {
+                        $('#contactForm' + i).show();
+                        break;
+                    }
+                }
+            });
+
+            $('#save').on('click', function () {
+                var flag = false;
+                $('#infoForm').find('input').each(function () {
+                    if (!$(this).parent().parent().is(':hidden') && $(this).val().trim().length === 0) {
+                        $(this).parent().parent().addClass('weui-cell_warn');
+                        flag = true;
+                    }
+                });
+                if (flag) {
+                    return;
+                }
+
+
+                if (!$('#save').hasClass('weui-btn_loading'))
+                    $('#save').addClass('weui-btn_loading');
+
+                $('#save').text('');
+                $('#save').append('<i class="weui-loading"></i>正在保存')
+
+                var cdata = new Array();
+                for (var i = 1; i <= 3; i++) {
+                    if (!$('#contactForm' + i).is(':hidden')) {
+                        cdata.push({
+                            call: $('#contactForm' + i).find('input[name*="call"]').val(),
+                        });
+                    }
+                }                
+
+                //save contacts
+                $.ajax({
+                    url: '/api/contacts/wx',
+                    type: 'PUT',
+                    data: {
+                        openid: openid,
+                        contacts: cdata
+                    }
+                })
+                    .done(function (data) {
+
+                        if ($('#doneToast').css('display') == 'none')
+                            $('#doneToast').fadeIn(100);
+                        setTimeout(function () {
+                            $('#doneToast').fadeOut(100);
+                        }, 1000);
+                    })
+                    .fail(function (data) {
+
+                        $('#savehDialog').fadeIn(100);
+                    })
+                    .always(function (data) {
+
+                        if ($('#save').hasClass('weui-btn_loading'))
+                            $('#save').removeClass('weui-btn_loading');
+
+                        $('#save').text('保存');
+                    });
+            });
+        });
+    </script>
+
+    <script type="text/javascript" class="querystring js_show">
+        function getUrlVars() {
+            var vars = [], hash;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for (var i = 0; i < hashes.length; i++) {
+                hash = hashes[i].split('=');
+                vars.push(hash[0]);
+                vars[hash[0]] = hash[1];
+            }
+            return vars;
+        }
+    </script>
+</body>
+</html>

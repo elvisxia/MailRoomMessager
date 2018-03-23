@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title>我的绑定</title>
+    <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css" />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="page">
+            <div id="loadingToast" style="display:none;">
+                <div class="weui-mask_transparent"></div>
+                <div class="weui-toast">
+                    <i class="weui-loading weui-icon_toast"></i>
+                    <p class="weui-toast__content">加载中</p>
+                </div>
+            </div>
+
+            <div class="js_dialog" id="refreshDialog" style="display: none;">
+                <div class="weui-mask"></div>
+                <div class="weui-dialog">
+                    <div class="weui-dialog__bd">加载失败，请刷新重试</div>
+                    <div class="weui-dialog__ft">
+                        <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">确定</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page__bd_sp" id="bindingForm" style="display: none;">
+                <div class="weui-panel__hd">您还未绑定alias。</div>
+
+                <div class="page__bd page__bd_spacing" style="padding:10px">
+                    <a class="weui-btn weui-btn_primary" href="javascript:;" id="bindBtn">去绑定</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" class="onload js_show">
+        $(function () {
+            var $loadingToast = $('#loadingToast');
+            $loadingToast.fadeIn(100);
+
+            //get employee
+            $.get("/api/employees/wx?code=" + getUrlVars()['code'], function () {
+            }).done(function (data) {
+                window.location.replace("/Pages/binded.html?alias=" + data["Alias"] + "&openid=" + data["OpenId"]);
+
+            }).fail(function (data) {
+
+                if (JSON.parse(data.responseText)["ErrorCode"] === "40003") {
+                    $('#bindingForm').show();
+                }
+                else {
+                    $('#refreshDialog').show()
+                }
+            }).always(function (data) {
+                $loadingToast.fadeOut(100);
+            });
+
+            var $refreshDialog = $('#refreshDialog');
+            $('#refreshDialog a').on('click', function () {
+
+                $refreshDialog.fadeOut(200);
+            });
+
+            $('#bindBtn').on('click', function () {
+
+                window.location.replace("/Pages/binding.html?code=" + getUrlVars()['code'])
+            });
+        });
+    </script>
+
+    <script type="text/javascript" class="querystring js_show">
+        function getUrlVars() {
+            var vars = [], hash;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for (var i = 0; i < hashes.length; i++) {
+                hash = hashes[i].split('=');
+                vars.push(hash[0]);
+                vars[hash[0]] = hash[1];
+            }
+            return vars;
+        }
+    </script>
+
+</body>
+</html>

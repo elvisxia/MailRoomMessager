@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title>我的快递</title>
+    <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css" />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="page">
+            <div id="loadingToast" style="display:none;">
+                <div class="weui-mask_transparent"></div>
+                <div class="weui-toast">
+                    <i class="weui-loading weui-icon_toast"></i>
+                    <p class="weui-toast__content">加载中</p>
+                </div>
+            </div>
+
+            <div class="js_dialog" id="refreshDialog" style="display: none;">
+                <div class="weui-mask"></div>
+                <div class="weui-dialog">
+                    <div class="weui-dialog__bd">加载失败，请刷新重试</div>
+                    <div class="weui-dialog__ft">
+                        <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">确定</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page__bd_sp" id="nullForm" hidden>
+                <div class="weui-cells__title">没有您的快递。</div>
+            </div>
+
+            <div class="page__bd_sp" id="bindingForm" hidden>
+                <div class="weui-cells__title">您还未绑定alias。</div>
+
+                <div class="page__bd page__bd_spacing" style="padding:10px">
+                    <a class="weui-btn weui-btn_primary" href="javascript:;" id="bindBtn">去绑定</a>
+                </div>
+            </div>
+
+            <div class="page__bd_sp" id="infoForm">
+                <div class="weui-panel weui-panel_access">
+                    <div class="weui-panel__bd" id="ordersDiv">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" class="onload js_show">
+        $(function () {
+            var $loadingToast = $('#loadingToast');
+            $loadingToast.fadeIn(100);
+
+            //get orders
+            $.get("/api/orders/wx?code=" + getUrlVars()['code'], function () {
+            })
+                .done(function (data) {
+
+                    if (data.length == 0) $('#nullForm').show();
+                    for (var i = 0; i < data.length; i++) {
+                        $('#ordersDiv').append('<div class="weui-media-box weui-media-box_text"><h4 class="weui-media-box__title">' + data[i]['Operator'] + ': ' + data[i]['OrderId'] + '</h4 ><p class="weui-media-box__desc">收件人: ' + data[i]['Name'] + '</p><p class="weui-media-box__desc">录入时间: ' + formatDate(data[i]['InputTime']) + '</p></div >');
+                    }
+                })
+                .fail(function (data) {
+                    if (JSON.parse(data.responseText)["ErrorCode"] === "40003") {
+                        $('#bindingForm').show();
+                    }
+                    else {
+                        $('#refreshDialog').show()
+                    }
+                })
+                .always(function (data) {
+                    $('#loadingToast').hide();
+                    $('#infoForm').show();
+                });
+
+            var $refreshDialog = $('#refreshDialog');
+            $('#refreshDialog a').on('click', function () {
+
+                $refreshDialog.fadeOut(200);
+            });
+
+            $("#nameTxt").on('input', function (e) {
+                $('#nameDiv').removeClass('weui-cell_warn');
+            });
+
+            $("#seatTxt").on('input', function (e) {
+                $('#seatDiv').removeClass('weui-cell_warn');
+            });
+
+            $('#bindBtn').on('click', function () {
+
+                window.location.replace("/Pages/binding.html?code=" + getUrlVars()['code'])
+            });
+        });
+    </script>
+
+    <script type="text/javascript" class="querystring js_show">
+        function getUrlVars() {
+            var vars = [], hash;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for (var i = 0; i < hashes.length; i++) {
+                hash = hashes[i].split('=');
+                vars.push(hash[0]);
+                vars[hash[0]] = hash[1];
+            }
+            return vars;
+        }
+
+        function formatDate(date) {
+            var d = new Date(date);
+            var month = '' + (d.getMonth() + 1);
+            var day = '' + d.getDate();
+            var year = d.getFullYear();
+            var hour = '' + d.getHours();
+            var minute = '' + d.getMinutes();
+
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+            if (hour.length < 2) hour = '0' + hour;
+            if (minute.length < 2) minute = '0' + minute;
+
+            return [year, month, day + ' '].join('-') + [' ' + hour, minute].join(':');
+        }
+    </script>
+
+</body>
+</html>

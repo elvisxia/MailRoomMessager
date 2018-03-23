@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title>我的绑定</title>
+    <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css" />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="page input js_show">
+            <div class="page__bd_sp">
+                <div class="weui-panel__hd" id="alias">111</div>
+
+                <div class="page__bd page__bd_spacing" style="padding:10px">
+                    <a class="weui-btn weui-btn_warn" href="javascript:;" id="unbindBtn">解除绑定</a>
+                </div>
+
+                <div id="doneToast" style="display: none;">
+                    <div class="weui-mask_transparent"></div>
+                    <div class="weui-toast">
+                        <i class="weui-icon-success-no-circle weui-icon_toast"></i>
+                        <p class="weui-toast__content">已解除</p>
+                    </div>
+                </div>
+
+                <div class="dialogs">
+                    <div class="js_dialog" id="errorDialog" style="display: none;">
+                        <div class="weui-mask"></div>
+                        <div class="weui-dialog">
+                            <div class="weui-dialog__bd">解除绑定失败，请重试</div>
+                            <div class="weui-dialog__ft">
+                                <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">确定</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        <script type="text/javascript" class="unbind js_show">
+
+            $(function () {
+                $("#alias").text('已绑定alias: ' + getUrlVars()['alias'] + "。");
+
+                $('#unbindBtn').on('click', function () {
+
+                    if (!$('#unbindBtn').hasClass('weui-btn_loading'))
+                        $('#unbindBtn').addClass('weui-btn_loading');
+
+                    $('#unbindBtn').text('');
+                    $('#unbindBtn').append('<i class="weui-loading"></i>正在解除')
+
+
+                    //unbind
+                    $.ajax({
+                        url: "/api/employees/wx?openid=" + getUrlVars()['openid'],
+                        method: 'DELETE'
+                    })
+                        .done(function (data) {
+
+                            if ($('#doneToast').css('display') == 'none')
+                                $('#doneToast').fadeIn(100);
+                            setTimeout(function () {
+                                $('#doneToast').fadeOut(100);
+                            }, 1000);
+                            $("#alias").text('绑定已解除。');
+                        })
+
+                        .fail(function (data) {
+
+                            $('#errorDialog a').on('click', function () {
+
+                                $('#errorDialog').fadeOut(100);
+                            });
+                            $('#errorDialog').fadeIn(100);
+                        })
+
+                        .always(function (data) {
+
+                            if ($('#unbindBtn').hasClass('weui-btn_loading'))
+                                $('#unbindBtn').removeClass('weui-btn_loading');
+
+                            $('#unbindBtn').text('解除绑定');
+                        });
+                });
+            });
+        </script>
+
+
+        <script type="text/javascript" class="querystring js_show">
+            function getUrlVars() {
+                var vars = [], hash;
+                var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+                for (var i = 0; i < hashes.length; i++) {
+                    hash = hashes[i].split('=');
+                    vars.push(hash[0]);
+                    vars[hash[0]] = hash[1];
+                }
+                return vars;
+            }
+        </script>
+    </div>
+        </div>
+</body>
+</html>

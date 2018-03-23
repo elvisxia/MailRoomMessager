@@ -1,0 +1,217 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title>录入</title>
+    <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css" />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+    <script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="page">
+
+            <div id="doneToast" style="display: none;">
+                <div class="weui-mask_transparent"></div>
+                <div class="weui-toast">
+                    <i class="weui-icon-success-no-circle weui-icon_toast"></i>
+                    <p class="weui-toast__content">提交成功</p>
+                </div>
+            </div>
+
+            <div class="page__bd_sp" id="infoForm">
+                <div class="weui-cells weui-cells_form">
+                    <div class="weui-cell" id="callDiv">
+                        <div class="weui-cell__hd"><label class="weui-label">电话</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" type="number" id="callTxt" placeholder="请输入电话号码" list="calllist">
+                            <datalist class="weui-select" id="calllist"></datalist>
+                        </div>
+                        <div class="weui-cell__ft">
+                            <i class="weui-icon-warn"></i>
+                        </div>
+                    </div>
+                    <div class="weui-cell" id="nameDiv">
+                        <div class="weui-cell__hd"><label class="weui-label">收件人</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" id="nameTxt" placeholder="请输入收件人" list="namelist">
+                            <datalist class="weui-select" id="namelist"></datalist>
+                        </div>
+                        <div class="weui-cell__ft">
+                            <i class="weui-icon-warn"></i>
+                        </div>
+                    </div>
+                    <div class="weui-cell" id="orderDiv">
+                        <div class="weui-cell__hd"><label class="weui-label">订单号</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" id="orderTxt" placeholder="请输入订单号">
+                        </div>
+                        <div class="weui-cell__ft">
+                            <button class="weui-vcode-btn" id="scan">扫一扫</button>
+                        </div>
+                    </div>
+                    <div class="weui-cell weui-cell_select weui-cell_select-after" id="operatorDiv">
+                        <div class="weui-cell__hd">
+                            <label for="" class="weui-label">快递公司</label>
+                        </div>
+                        <div class="weui-cell__bd">
+                            <select class="weui-select" id="operatorSelect"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="page__bd page__bd_spacing" style="padding:10px">
+                    <a class="weui-btn weui-btn_primary" href="javascript:;" id="save">提交</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" class="onload js_show">
+        $(function () {
+            var sig;
+            var openid;
+            var contacts = new Map();
+            //get signature
+            $.ajax({
+                type: 'GET',
+                url: "/api/tokens/wx?code=" + getUrlVars()['code'],
+                async: false,
+                success: function (data) {
+
+                    sig = data["sig"];
+                    openid = data["openid"];                    
+                }
+            });
+            wx.config({
+                debug: false,
+                appId: 'wxc13ba2d6438ac40a',
+                timestamp: 1414587421,
+                nonceStr: 'mailroom',
+                signature: sig,
+                jsApiList: ['scanQRCode']
+            });
+
+            wx.ready(function () {
+
+                wx.checkJsApi({
+                    jsApiList: ['scanQRCode'],
+                    success: function (res) {
+
+                    }
+                });
+            });
+            wx.error(function (res) {
+
+            });
+
+            //get operators
+            $.get("/api/operators", function () {
+            })
+                .done(function (data) {
+                    $('#operatorDiv').find('select').empty();
+                    for (var i = 0; i < data.length; i++) {
+                        $('#operatorDiv').find('select').append('<option>' + data[i]['Name'] + '</option>');
+                    }
+                });
+
+            $('#scan').on('click', function () {
+                wx.scanQRCode({
+                    needResult: 1,
+                    scanType: ["qrCode", "barCode"],
+                    success: function (res) {
+                        var result = res.resultStr;
+                        $('#orderTxt').val(result.split(',')[1]);
+                    }
+                });
+            });
+
+            $('#callTxt').on('input', function () {
+
+                if (contacts.has($('#callTxt').val())) {
+                    $('#nameTxt').val(contacts.get($('#callTxt').val()));
+                    return;
+                }
+
+                //get suggested calls
+                $('#callDiv').find('datalist').empty();
+                contacts.clear();
+                $.get("/api/contacts/wx/sg?call=" + $('#callTxt').val(), function () {
+                })
+                    .done(function (data) {
+                        
+                        for (var i = 0; i < data.length; i++) {
+                            $('#callDiv').find('datalist').append('<option>' + data[i]['Call'] + '</option>');
+                            contacts.set(data[i]['Call'], data[i]['Name']);
+                        }
+                    })
+                    .fail(function (data) {
+                    })
+                    .always(function (data) {
+                    });
+            });
+
+            $('#infoForm').find('input').each(function () {
+                $(this).on('input', function () {
+                    $(this).parent().parent().removeClass('weui-cell_warn');
+                });
+            });
+
+            //save order
+            $('#save').on('click', function () {
+                var flag = false;
+                $('#infoForm').find('input').each(function () {
+                    if ($(this).val().trim().length === 0) {
+                        $(this).parent().parent().addClass('weui-cell_warn');
+                        flag = true;
+                    }
+                });
+                if (flag) {
+                    return;
+                }
+
+                $('#save').addClass('weui-btn_loading');
+                $('#save').text('');
+                $('#save').append('<i class="weui-loading"></i>正在提交')
+
+                $.post("/api/orders/wx", {
+                    orderid: $('#orderTxt').val(),
+                    operator: $('#operatorSelect').find('option:selected').text(),
+                    name: $('#nameTxt').val(),
+                    call: $('#callTxt').val()
+                })
+                    .done(function (data) {
+                        if ($('#doneToast').css('display') == 'none')
+                            $('#doneToast').fadeIn(100);
+                        setTimeout(function () {
+                            $('#doneToast').fadeOut(100);
+                        }, 1000);
+                    }).fail(function (data) {
+
+                    }).always(function (data) {
+
+                        $('#save').removeClass('weui-btn_loading');
+                        $('#save').text('提交');
+                    });
+            });
+
+        });
+    </script>
+
+    <script type="text/javascript" class="querystring js_show">
+        function getUrlVars() {
+            var vars = [], hash;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for (var i = 0; i < hashes.length; i++) {
+                hash = hashes[i].split('=');
+                vars.push(hash[0]);
+                vars[hash[0]] = hash[1];
+            }
+            return vars;
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,218 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title>我的绑定</title>
+    <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css" />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="page input js_show">
+            <div class="page__bd_sp">
+                <div class="weui-cells weui-cells_form">
+                    <div class="weui-cell">
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" type="text" placeholder="alias" id="alias">
+                        </div>
+                        <div class="weui-cell__hd">
+                            <label for="" class="weui-label" style="width: 130px;">@microsoft.com</label>
+                        </div>
+                    </div>
+                    <div class="weui-cell weui-cell_vcode">
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" type="number" placeholder="邮箱验证码" pattern="[0-9]*" id="captcha">
+                        </div>
+                        <div class="weui-cell__ft">
+                            <button class="weui-vcode-btn" id="getCaptcha">获取验证码</button>
+                        </div>
+                    </div>
+                    <div class="weui-cell weui-cell_tip" id="tipCell" style="display:none">
+                        <div class="weui-cells__tips" id="tips">验证码已发送</div>
+                    </div>
+                </div>
+
+                <div class="page__bd page__bd_spacing" style="padding:10px">
+                    <a class="weui-btn weui-btn_primary" href="javascript:;" id="bind">绑定</a>
+                </div>
+
+                <div class="dialogs">
+                    <div class="js_dialog" id="aliasDialog" style="display: none;">
+                        <div class="weui-mask"></div>
+                        <div class="weui-dialog">
+                            <div class="weui-dialog__bd">请输入alias.</div>
+                            <div class="weui-dialog__ft">
+                                <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">知道了</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="js_dialog" id="infoDialog" style="display: none;">
+                        <div class="weui-mask"></div>
+                        <div class="weui-dialog">
+                            <div class="weui-dialog__bd">输入信息不完整.</div>
+                            <div class="weui-dialog__ft">
+                                <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">知道了</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="js_dialog" id="bindDialog" style="display: none;">
+                        <div class="weui-mask"></div>
+                        <div class="weui-dialog">
+                            <div class="weui-dialog__bd">您已成功绑定alias: {alias}.</div>
+                            <div class="weui-dialog__ft">
+                                <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">确定</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="js_dialog" id="captchaDialog" style="display: none;">
+                        <div class="weui-mask"></div>
+                        <div class="weui-dialog">
+                            <div class="weui-dialog__bd">验证码获取失败，请重试绑定</div>
+                            <div class="weui-dialog__ft">
+                                <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">确定</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="js_dialog" id="captchaerrorDialog" style="display: none;">
+                        <div class="weui-mask"></div>
+                        <div class="weui-dialog">
+                            <div class="weui-dialog__bd">验证码错误，请重新绑定</div>
+                            <div class="weui-dialog__ft">
+                                <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">确定</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="doneToast" style="display: none;">
+                    <div class="weui-mask_transparent"></div>
+                    <div class="weui-toast">
+                        <i class="weui-icon-success-no-circle weui-icon_toast"></i>
+                        <p class="weui-toast__content">绑定成功</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <script type="text/javascript" class="captcha js_show">
+            $(function () {
+                var $aliasDialog = $('#aliasDialog');
+                $('#aliasDialog a').on('click', function () {
+
+                    $aliasDialog.fadeOut(200);
+                });
+
+                $('#getCaptcha').on('click', function () {
+                    if ($('#getCaptcha').prop('disabled'))
+                        return;
+                    if ($('#alias').val().trim().length === 0) {
+
+                        $aliasDialog.fadeIn(200);
+                        return;
+                    }
+                    $('#getCaptcha').prop('disabled', true);
+                    timedCount();
+
+                    //get captcha
+                    $.get("/api/captchas/wx?alias=" + $('#alias').val() + "&code=" + getUrlVars()['code'])
+                        .done(function (data) {
+
+                            $('#tips').text('验证码已发送');
+                            if ($('#tipCell').css('display') == 'none')
+                                $('#tipCell').fadeIn(100);
+                        }).fail(function (data) {
+                            alert(data.responseText);
+                            $('#captchaDialog a').on('click', function () {
+
+                                $('#captchaDialog').fadeOut(200);
+                            });
+                            $('#captchaDialog').fadeIn(200);
+                            c = 0;
+                            $('#getCaptcha').text('获取验证码');
+                            $('#getCaptcha').prop('disabled', false);
+                        });
+                });
+            });
+
+            var c = 60;
+            function timedCount() {
+                if (c <= 0) {
+                    $('#getCaptcha').text('获取验证码');
+                    return;
+                }
+                $('#getCaptcha').text(c + 's后重新获取');
+                c = c - 1;
+                setTimeout("timedCount()", 1000);                
+            }
+        </script>
+
+        <script type="text/javascript" class="bind js_show">
+            $(function () {
+
+                var $infoDialog = $('#infoDialog');
+                $('#infoDialog a').on('click', function () {
+
+                    $infoDialog.fadeOut(200);
+                });
+
+                $('#bind').on('click', function () {
+
+                    if ($('#alias').val().trim().length === 0 || $('#captcha').val().trim().length === 0) {
+
+                        $infoDialog.fadeIn(200);
+                        return;
+                    }
+                    if (!$('#bind').hasClass('weui-btn_loading'))
+                        $('#bind').addClass('weui-btn_loading');
+
+                    $('#bind').text('');
+                    $('#bind').append('<i class="weui-loading"></i>正在绑定')
+
+                    $.post("/api/captchas/wx", { alias: $('#alias').val(), captcha: $('#captcha').val() })
+                        .done(function (data) {
+                            if ($('#doneToast').css('display') == 'none')
+                                $('#doneToast').fadeIn(100);
+                            setTimeout(function () {
+                                $('#doneToast').fadeOut(100);
+                            }, 1000);
+                            window.location.replace("/Pages/binded.html?alias=" + $('#alias').val() + "&openid=" + data);
+                        }).fail(function (data) {
+
+                            $('#captchaerrorDialog .weui-dialog__bd').text(data);
+                            $('#captchaerrorDialog a').on('click', function () {
+
+                                $('#captchaerrorDialog').fadeOut(100);
+                            });
+                            $('#captchaerrorDialog').fadeIn(100);
+                        }).always(function (data) {
+
+                            if ($('#bind').hasClass('weui-btn_loading'))
+                                $('#bind').removeClass('weui-btn_loading');
+
+                            $('#bind').text('绑定');
+                        });
+                });
+            });
+        </script>
+
+        <script type="text/javascript" class="querystring js_show">
+            function getUrlVars() {
+                var vars = [], hash;
+                var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+                for (var i = 0; i < hashes.length; i++) {
+                    hash = hashes[i].split('=');
+                    vars.push(hash[0]);
+                    vars[hash[0]] = hash[1];
+                }
+                return vars;
+            }
+        </script>
+
+    </div>
+</body>
+</html>

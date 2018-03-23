@@ -1,0 +1,314 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title>我的资料</title>
+    <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css" />
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="page">
+            <div id="loadingToast" style="display:none;">
+                <div class="weui-mask_transparent"></div>
+                <div class="weui-toast">
+                    <i class="weui-loading weui-icon_toast"></i>
+                    <p class="weui-toast__content">加载中</p>
+                </div>
+            </div>
+
+            <div class="js_dialog" id="refreshDialog" style="display: none;">
+                <div class="weui-mask"></div>
+                <div class="weui-dialog">
+                    <div class="weui-dialog__bd">加载失败，请刷新重试</div>
+                    <div class="weui-dialog__ft">
+                        <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">确定</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="js_dialog" id="saveDialog" style="display: none;">
+                <div class="weui-mask"></div>
+                <div class="weui-dialog">
+                    <div class="weui-dialog__bd">保存失败，请刷新重试</div>
+                    <div class="weui-dialog__ft">
+                        <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary">确定</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="doneToast" style="display: none;">
+                <div class="weui-mask_transparent"></div>
+                <div class="weui-toast">
+                    <i class="weui-icon-success-no-circle weui-icon_toast"></i>
+                    <p class="weui-toast__content">保存成功</p>
+                </div>
+            </div>
+
+            <div class="page__bd_sp" id="bindingForm" hidden>
+                <div class="weui-cells__title">您还未绑定alias。</div>
+
+                <div class="page__bd page__bd_spacing" style="padding:10px">
+                    <a class="weui-btn weui-btn_primary" href="javascript:;" id="bindBtn">去绑定</a>
+                </div>
+            </div>
+
+            <div class="page__bd_sp" id="infoForm" hidden>
+                <div class="weui-cells weui-cells_form">
+                    <div class="weui-cell" id="nameDiv">
+                        <div class="weui-cell__hd"><label class="weui-label">Name</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" id="nameTxt" placeholder="请输入姓名">
+                        </div>
+                        <div class="weui-cell__ft">
+                            <i class="weui-icon-warn"></i>
+                        </div>
+                    </div>
+                    <div class="weui-cell weui-cell_select weui-cell_select-after">
+                        <div class="weui-cell__hd">
+                            <label for="" class="weui-label">Site</label>
+                        </div>
+                        <div class="weui-cell__bd">
+                            <select class="weui-select" id="siteSelect">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="weui-cell weui-cell_select weui-cell_select-after">
+                        <div class="weui-cell__hd">
+                            <label for="" class="weui-label">Building</label>
+                        </div>
+                        <div class="weui-cell__bd">
+                            <select class="weui-select" id="buildingSelect">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="weui-cell weui-cell_select weui-cell_select-after">
+                        <div class="weui-cell__hd">
+                            <label for="" class="weui-label">Floor</label>
+                        </div>
+                        <div class="weui-cell__bd">
+                            <select class="weui-select" id="floorSelect">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="weui-cell" id="seatDiv">
+                        <div class="weui-cell__hd"><label for="" class="weui-label">Seat</label></div>
+                        <div class="weui-cell__bd">
+                            <input class="weui-input" id="seatTxt" placeholder="请输入Seat">
+                        </div>
+                        <div class="weui-cell__ft">
+                            <i class="weui-icon-warn"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="page__bd page__bd_spacing" style="padding:10px">
+                    <a class="weui-btn weui-btn_primary" href="javascript:;" id="save">保存</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" class="onload js_show">
+        var openid;
+        var sites = new Map();
+        $(function () {
+            var $loadingToast = $('#loadingToast');
+            $loadingToast.fadeIn(100);
+
+            //get sites
+            $.get("/api/sites", function () {
+            }).done(function (data) {
+                $('#siteSelect').empty();
+                for (var i = 0; i < data.length; i++) {
+                    var site = data[i]['Name'];
+                    var building = data[i]['Building'];
+                    var floor = data[i]['Floor'];
+
+                    if (!sites.has(site)) {
+                        sites.set(site, new Map());
+                    }
+                    if (!sites.get(site).has(building)) {
+                        sites.get(site).set(building, new Array());
+                    }
+                    sites.get(site).get(building).push(floor);
+                }
+            }).fail(function (data) {
+                $('#refreshDialog').show();
+            });
+
+            //get employee
+            $.get("/api/employees/wx?code=" + getUrlVars()['code'], function () {
+            }).done(function (data) {
+                
+                sites.forEach(function (value, key, map) {
+                    $('#siteSelect').append('<option>' + key + '</option>');
+                });
+
+                var building = sites.keys().next().value;
+                sites.get(building).forEach(function (value, key, map) {
+                    $('#buildingSelect').append('<option>' + key + '</option>');
+                });
+
+                var floor = sites.get(building).keys().next().value;
+                sites.get(building).get(floor).forEach(function (item) {
+                    $('#floorSelect').append('<option>' + item + '</option>');
+                });
+
+                openid = data["OpenId"];
+                $('#nameTxt').val(data['Name']);
+                $('#seatTxt').val(data['Seat']);
+                $("#siteSelect option").each(function () {
+                    if ($(this).text() == data['Site']) {
+                        $('#siteSelect').val($(this).val());
+                    }
+                });
+                $("#buildingSelect option").each(function () {
+                    if ($(this).text() == data['Building']) {
+                        $('#buildingSelect').val($(this).val());
+                    }
+                });
+                $("#floorSelect option").each(function () {
+                    if ($(this).text() == data['Floor']) {
+                        $('#floorSelect').val($(this).val());
+                    }
+                });
+
+                $('#infoForm').show();
+                
+            }).fail(function (data) {
+
+                if (JSON.parse(data.responseText)["ErrorCode"] === "40003") {
+                    $('#bindingForm').show();
+                }
+                else
+                {
+                    $('#refreshDialog').show()
+                }
+                }).always(function (data) {
+                    $loadingToast.fadeOut(100);
+                });
+
+            $('#bindBtn').on('click', function () {
+
+                window.location.replace("/Pages/binding.html?code=" + getUrlVars()['code'])
+            });
+
+            var $refreshDialog = $('#refreshDialog');
+            $('#refreshDialog a').on('click', function () {
+
+                $refreshDialog.fadeOut(200);
+            });
+
+            var $saveDialog = $('#saveDialog');
+            $('#saveDialog a').on('click', function () {
+
+                $saveDialog.fadeOut(200);
+            });
+
+            $("#nameTxt").on('input', function (e) {
+                $('#nameDiv').removeClass('weui-cell_warn');
+            });
+
+            $("#seatTxt").on('input', function (e) {
+                $('#seatDiv').removeClass('weui-cell_warn');
+            });
+
+            $('#siteSelect').on('change', function (e) {
+                var site = $('#siteSelect').find('option:selected').text();
+                var building = sites.get(site).keys().next().value;
+                $('#buildingSelect').empty();
+                $('#floorSelect').empty();
+                sites.get(site).forEach(function (value, key, map) {
+                    $('#buildingSelect').append('<option>' + key + '</option>');
+                });
+                sites.get(site).get(building).forEach(function (item) {
+                    $('#floorSelect').append('<option>' + item + '</option>');
+                });
+            });
+
+            $('#buildingSelect').on('change', function (e) {
+                var site = $('#siteSelect').find('option:selected').text();
+                var building = $('#buildingSelect').find('option:selected').text();
+                $('#floorSelect').empty();
+                sites.get(site).get(building).forEach(function (item) {
+                    $('#floorSelect').append('<option>' + item + '</option>');
+                });
+            });
+
+            //save employee
+            $('#save').on('click', function () {
+
+                if ($('#nameTxt').val().trim().length === 0) {
+
+                    $('#nameDiv').addClass('weui-cell_warn');
+                    return;
+                }
+
+                if ($('#seatTxt').val().trim().length === 0) {
+
+                    $('#seatDiv').addClass('weui-cell_warn');
+                    return;
+                }
+
+                if (!$('#save').hasClass('weui-btn_loading'))
+                    $('#save').addClass('weui-btn_loading');
+
+                $('#save').text('');
+                $('#save').append('<i class="weui-loading"></i>正在保存')
+
+                $.ajax({
+                    url: "/api/employees/wx",
+                    method: 'PUT',
+                    data: {
+
+                        openid: openid,
+                        name: $('#nameTxt').val(),
+                        site: $('#siteSelect').find('option:selected').text(),
+                        building: $('#buildingSelect').find('option:selected').text(),
+                        floor: $('#floorSelect').find('option:selected').text(),
+                        seat: $('#seatTxt').val()
+                    }
+                })
+                    .done(function (data) {
+
+                        if ($('#doneToast').css('display') == 'none')
+                            $('#doneToast').fadeIn(100);
+                        setTimeout(function () {
+                            $('#doneToast').fadeOut(100);
+                        }, 1000);
+                    })
+
+                    .fail(function (data) {
+
+                        $('#savehDialog').fadeIn(100);
+                    })
+
+                    .always(function (data) {
+
+                        if ($('#save').hasClass('weui-btn_loading'))
+                            $('#save').removeClass('weui-btn_loading');
+
+                        $('#save').text('保存');
+                    });
+            });
+        });
+    </script>
+
+    <script type="text/javascript" class="querystring js_show">
+        function getUrlVars() {
+            var vars = [], hash;
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+            for (var i = 0; i < hashes.length; i++) {
+                hash = hashes[i].split('=');
+                vars.push(hash[0]);
+                vars[hash[0]] = hash[1];
+            }
+            return vars;
+        }
+    </script>
+
+</body>
+</html>
